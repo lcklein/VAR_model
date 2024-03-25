@@ -1,0 +1,866 @@
+% !TeX program = pdfLaTeX
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{graphicx,psfrag,epsf}
+\usepackage{enumerate}
+\usepackage{natbib}
+\usepackage{textcomp}
+\usepackage[hyphens]{url} % not crucial - just used below for the URL
+\usepackage{hyperref}
+
+%\pdfminorversion=4
+% NOTE: To produce blinded version, replace "0" with "1" below.
+\newcommand{\blind}{0}
+
+% DON'T change margins - should be 1 inch all around.
+\addtolength{\oddsidemargin}{-.5in}%
+\addtolength{\evensidemargin}{-.5in}%
+\addtolength{\textwidth}{1in}%
+\addtolength{\textheight}{1.3in}%
+\addtolength{\topmargin}{-.8in}%
+
+%% load any required packages here
+
+
+
+% tightlist command for lists without linebreak
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% From pandoc table feature
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+
+
+
+\begin{document}
+
+
+\def\spacingset#1{\renewcommand{\baselinestretch}%
+{#1}\small\normalsize} \spacingset{1}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\if0\blind
+{
+  \title{\bf Exchange Rate Pass-Through: An Analysis for Brazil}
+
+  \author{
+        Luca Klein \\
+    Cedeplar, Universidade Federal de Minas Gerais\\
+      }
+  \maketitle
+} \fi
+
+\if1\blind
+{
+  \bigskip
+  \bigskip
+  \bigskip
+  \begin{center}
+    {\LARGE\bf Exchange Rate Pass-Through: An Analysis for Brazil}
+  \end{center}
+  \medskip
+} \fi
+
+\bigskip
+\begin{abstract}
+The present article aims to empirically analyze the relationship between
+the exchange rate and the Brazilian price index, IPCA, from 2010 to
+2022. For this purpose, a thorough review of the literature will be
+conducted, followed by the presentation of empirical results obtained
+through the Vector Autoregressive (VAR) methodology. Regarding the
+theoretical aspect, there are various approaches to the subject, both in
+the microeconomic and macroeconomic realms. However, this work will
+focus solely on the macroeconomic approach to highlight the impact of
+exchange rates on domestic prices in a more aggregate manner. As for the
+results, the estimation reveals a low degree of exchange rate
+pass-through to prices, as the analyzed period exhibits vectors that
+limit this type of dynamics.
+\end{abstract}
+
+\noindent%
+{\it Keywords:} Prices, Time Series, Macroeconomics
+\vfill
+
+\newpage
+\spacingset{1.45} % DON'T change the spacing!
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+The central idea of the article is to examine how changes in the
+exchange rate affect the domestic price index, a phenomenon commonly
+known in the literature as exchange rate pass-through to inflation. In
+this sense, the degree of exchange rate pass-through to inflation is
+defined as the impact of the nominal exchange rate on domestic prices,
+with empirical evidence reporting a degree lower than unity, according
+to Campa \& Goldberg (2002). The motivation behind the work stems from
+the lack of studies of this nature for the Brazilian case, as there is
+no consensus on the degree of pass-through in these reports.
+
+In recent years, Brazil faced an economic crisis in 2015 and the global
+health crisis, resulting in the depreciation of the national currency
+and an increase in price levels. On the domestic side, we observed some
+deviations of inflation from its target, as in the case of the year
+2021. Externally, both crises resulted in a scenario of increased risk
+aversion by agents towards Brazil, leading to a local appreciation of
+the dollar. Works such as Goldberg \& Knetter (1997) and Campa \&
+Goldberg (2002) have shown that domestic prices are becoming less
+volatile in relation to the exchange rate.
+
+From a theoretical perspective, the subject can be elaborated both in
+microeconomic and macroeconomic theory, with the latter being the focus
+of this article. Furthermore, even the macroeconomic perspective can be
+divided among sectors; however, the work will only focus on the
+aggregate aspect. As for the empirical part, the article develops a
+Vector Autoregressive (VAR) model to measure the contamination of
+nominal exchange rates on prices.
+
+\hypertarget{theoretical-framework}{%
+\section{Theoretical Framework}\label{theoretical-framework}}
+
+Within the theory, we can reference several macroeconomic approaches to
+the degree of pass-through. In general, there are various vectors of
+inflation contamination by exchange rates; however, this dynamic becomes
+more evident with a higher degree of trade openness, heated domestic
+demand, the share of imports within the consumption basket of households
+and firms, and, finally, larger deviations between the realized exchange
+rate and the equilibrium exchange rate. In other words, pass-through is
+intensified when domestic consumption shows a high dependence on
+international trade, so external shocks impact these nations more
+strongly, either through relative price adjustments or supply and demand
+issues. Some more sector-specific studies can more efficiently test the
+above assertions, as in the case of Krugman \& Obstfeld (1994), who
+claim that prices of non-tradable goods should be determined exclusively
+by domestic supply and demand factors, so that an increase in prices
+given domestically favors a reduction in the purchasing power of the
+country's currency.
+
+The empirical literature on the subject gained more emphasis within
+academia from 1980. One of the initially raised strands was based on
+testing Purchasing Power Parity (PPP), which argued that there should be
+a complete pass-through of exchange rate variations to prices. However,
+the results refuted this hypothesis and concluded that pass-through
+would not be complete either in the short or long term, according to
+Maciel (2006). In its new contours, Taylor's (2000) work brings relevant
+insights to the topic. According to the author, a context of a low or
+stable inflation regime is capable of reducing pass-through through the
+reduction of firms' power regarding price formation. Thus, the
+phenomenon should be determined endogenously concerning the inflationary
+context. In summary, Taylor (2000) argues that reduced inflation and
+monetary policy lead to low pass-through through guiding expectations
+about frequent changes in costs and prices.
+
+In the same line as Taylor (2000), Goldfajn \& Werlang (2000) suggest
+that a low inflation environment hinders pass-through. In this sense, as
+price and cost variations are more stable, firms tend to pass on fewer
+costs given via the exchange rate. Moreover, Goldfajn \& Werlang (2000)
+conclude that the main determinants for pass-through are the output gap,
+the degree of trade openness, and the real exchange rate. In this sense,
+there is evidence that the greater the slack in the economy, the greater
+the difficulty of exchange rate pass-through to prices. That is, in a
+scenario of economic expansion, where factors of production are
+underutilized, firms tend to have more ease in passing on costs related
+to the exchange rate. Regarding the real exchange rate, studies mention
+that such overvalued rates contribute to future depreciation. Thus,
+Goldfajn \& Werlang (2000) reinforce this perspective by stating that
+currency corrections through abundant depreciations would imply an
+environment of inflationary acceleration.
+
+Another important contribution came from Romer (1993), mainly on the
+side of trade openness. Romer (1993) comments that openness generates
+effects on the determinants of inflation when the government exerts an
+unexpected shock on prices in the face of a currency devaluation. In
+this line, there would be an impact on the benefits of an expansion of
+output in relation to its trade-off with inflation. Therefore, according
+to the author, the degree of openness has a negative influence on the
+incentives for domestic production and, therefore, corroborates the idea
+that pass-through will be greater when this scenario of external demand
+prevails over internal demand, except for substitute goods. Regarding
+the trade-off between output and inflation, Romer (1993) argues that a
+higher degree of trade openness contributes to high inflation when
+output grows, which, in turn, should generate a depreciation of the
+exchange rate and, consequently, an increase in domestic prices. The
+author reports two transmission channels of this contamination. The
+first refers to a rapid increase in exchange rate costs for inflation
+via imported products. While the second occurs with the rise in the
+general price level that positively impacts individual goods. Thus,
+assuming flexible wages and perceiving this, firms' costs would tend to
+increase, and thus, also the positive effects on the prices of domestic
+goods. In general, a scenario of output growth linked to an economy with
+a high degree of trade openness causes monetary expansion and increases
+in domestic prices.
+
+\hypertarget{empirical-analysis}{%
+\section{Empirical Analysis}\label{empirical-analysis}}
+
+\hypertarget{database}{%
+\subsection{Database}\label{database}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  IPCA - Index number (base 1993 = 100) - released by the Brazilian
+  Institute of Geography and Statistics (IBGE)
+\end{enumerate}
+
+2.Exchange Rate (R\$/USD) - free/sale - Average for the period -
+released by the Central Bank
+
+3.Brent Crude Oil Futures (R\$/USD) - released by the Fred St.~Louis
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{3}
+\tightlist
+\item
+  Monthly Industrial Production (PIM) - Seasonally adjusted index (base
+  2012=100) - released by the Brazilian Institute of Geography and
+  Statistics (IBGE)
+\end{enumerate}
+
+The data used are in monthly frequency, and a logarithmic function has
+been applied to them. Furthermore, the estimation used data on prices
+and economic activity, with the PIM and oil variables acting as control
+proxies to establish a demand and supply relationship, respectively, as
+suggested in Alves \& Souza (2011). Finally, the period considered is
+from January 2010 to February 2022, and all variables were treated as
+endogenous.
+
+\hypertarget{stationarity-test}{%
+\subsection{Stationarity Test}\label{stationarity-test}}
+
+Using the Augmented Dickey-Fuller (ADF) test, it was found that the
+series at levels accepted H0, meaning the data are non-stationary.
+However, by taking the first difference, we reject the null hypothesis,
+as demonstrated in the table below.
+
+\hypertarget{table-1-unit-root-test}{%
+\paragraph{Table 1: Unit Root Test}\label{table-1-unit-root-test}}
+
+\begin{longtable}[]{@{}cccc@{}}
+\toprule\noalign{}
+Variável & Estatística & P-Value & Status \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+IPCA & -1.6282 & 0.7313 & Level \\
+Exchange Rate & -2.9474 & 0.1819 & Level \\
+Brent Crude Oil Futures & -1.4739 & 0.7955 & Level \\
+PIM & -2.8466 & 0.2239 & Level \\
+IPCA & -3.8991 & 0.01616 & First Difference \\
+Exchange Rate & -3.7768 & 0.02214 & First Difference \\
+Brent Crude Oil Futures & -4.6761 & 0.01\textless{} & First
+Difference \\
+PIM & -6.2335 & 0.01\textless{} & First Difference \\
+\end{longtable}
+
+The ADF test results indicate that taking the first difference leads to
+stationarity in the series. The status ``Level'' means the series at its
+original level, and ``First Difference'' indicates the series after
+applying the first difference.
+
+\hypertarget{section}{%
+\subsection{}\label{section}}
+
+Lag Selection This section presents the lag selection to be used in the
+VAR model, with a maximum lag of 12 months ahead. The criteria
+considered are:
+
+AIC: Akaike Information Criterion HQ: Hannan-Quinn Information Criterion
+SC: Schwarz Information Criterion FPE: Final Prediction Error Criterion
+Table 2: Criteria Statistics
+
+\hypertarget{table-2-criteria-statistics}{%
+\paragraph{Table 2: Criteria
+Statistics}\label{table-2-criteria-statistics}}
+
+\begin{longtable}[]{@{}rrrrr@{}}
+\toprule\noalign{}
+Lag & AIC(n) & HQ(n) & SC(n) & FPE(n) \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1 & -30.01287 & -29.83625 & -29.57823 & 0 \\
+2 & -29.90253 & -29.58461 & -29.12018 & 0 \\
+3 & -29.85442 & -29.39521 & -28.72436 & 0 \\
+4 & -29.94904 & -29.34853 & -28.47127 & 0 \\
+5 & -29.84363 & -29.10182 & -28.01814 & 0 \\
+6 & -29.73242 & -28.84932 & -27.55923 & 0 \\
+7 & -29.74114 & -28.71674 & -27.22024 & 0 \\
+8 & -29.70645 & -28.54075 & -26.83783 & 0 \\
+9 & -29.63678 & -28.32979 & -26.42045 & 0 \\
+10 & -29.48321 & -28.03492 & -25.91917 & 0 \\
+11 & -29.35174 & -27.76215 & -25.43999 & 0 \\
+12 & -29.34115 & -27.61027 & -25.08169 & 0 \\
+\end{longtable}
+
+Unanimously, the criteria suggest that the lag within the model should
+be 1 period, as evidenced below.
+
+\hypertarget{table-3-lags}{%
+\paragraph{Table 3: Lags}\label{table-3-lags}}
+
+\begin{longtable}[]{@{}rrrr@{}}
+\toprule\noalign{}
+AIC(n) & HQ(n) & SC(n) & FPE(n) \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1 & 1 & 1 & 1 \\
+\end{longtable}
+
+\hypertarget{structural-break-test}{%
+\subsection{Structural Break Test}\label{structural-break-test}}
+
+The purpose behind this test is to check for any structural breaks in
+the series, thereby understanding if there is a significant difference
+between the estimated parameters that establish the relationship between
+variables. To do so, the article used the CUSUM method, which is based
+on the cumulative sum of recursive residuals and detects the instability
+of the variable when the data surpass the area delimited by two critical
+lines of 5\% significance. At the end of the test, it was found that
+there are no structural breaks in the series.
+
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-4-1.pdf}
+
+\#\#Model The system of equations generated from the methodology
+mentioned and the criteria listed above produced the following
+parameters:
+
+Table 4.1: IPCA
+
+\hypertarget{table-4.1-ipca}{%
+\paragraph{Table 4.1: IPCA}\label{table-4.1-ipca}}
+
+\begin{longtable}[]{@{}rrrrr@{}}
+\toprule\noalign{}
+est\_ipca.l1 & est\_cambio.l1 & est\_petroleo.l1 & est\_pim.l1 &
+const \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0.5892862 & 0.0081637 & 0.0068322 & -0.0048094 & 0.0019451 \\
+\end{longtable}
+
+\hypertarget{table-4.2-exchange-rate}{%
+\paragraph{Table 4.2: Exchange Rate}\label{table-4.2-exchange-rate}}
+
+\begin{longtable}[]{@{}rrrrr@{}}
+\toprule\noalign{}
+est\_ipca.l1 & est\_cambio.l1 & est\_petroleo.l1 & est\_pim.l1 &
+const \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0.0186154 & 0.1815868 & -0.066272 & -0.1025657 & 0.0056735 \\
+\end{longtable}
+
+\hypertarget{table-4.3-brent-crude-oil-futures}{%
+\paragraph{Table 4.3: Brent Crude Oil
+Futures}\label{table-4.3-brent-crude-oil-futures}}
+
+\begin{longtable}[]{@{}rrrrr@{}}
+\toprule\noalign{}
+est\_ipca.l1 & est\_cambio.l1 & est\_petroleo.l1 & est\_pim.l1 &
+const \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+-1.475793 & 0.160552 & 0.2038139 & -0.5266126 & 0.0068239 \\
+\end{longtable}
+
+\hypertarget{table-4.4-pim}{%
+\paragraph{Table 4.4: PIM}\label{table-4.4-pim}}
+
+\begin{longtable}[]{@{}rrrrr@{}}
+\toprule\noalign{}
+est\_ipca.l1 & est\_cambio.l1 & est\_petroleo.l1 & est\_pim.l1 &
+const \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+-0.6239632 & -0.0210411 & 0.138887 & -0.097003 & 0.0017495 \\
+\end{longtable}
+
+\hypertarget{serial-correlation}{%
+\subsection{Serial Correlation}\label{serial-correlation}}
+
+To test whether the residuals are independent and do not carry any
+relevant information for the model, the Portmanteau Test is used, where
+the null hypothesis of the test is that the residuals are
+autocorrelated. são autocorrelacionados.
+
+\hypertarget{table-5-portmanteau-test}{%
+\paragraph{Table 5: Portmanteau Test}\label{table-5-portmanteau-test}}
+
+\begin{longtable}[]{@{}cl@{}}
+\toprule\noalign{}
+Chi - Square & P-Value \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+198,94 & 0,1135 \\
+\end{longtable}
+
+Since the P-Value \textgreater{} 0.05, we can reject H0 and conclude
+that there is no serial correlation in the model.
+
+\hypertarget{heteroskedasticity}{%
+\subsection{Heteroskedasticity}\label{heteroskedasticity}}
+
+To test whether the residuals exhibit constant variance, we take the
+Multivariate ARCH Test, assuming H0 as the presence of
+heteroskedasticity.
+
+\hypertarget{table-6-arch-test}{%
+\paragraph{Table 6: ARCH Test}\label{table-6-arch-test}}
+
+\begin{longtable}[]{@{}cc@{}}
+\toprule\noalign{}
+Chi - Square & P-Value \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1258,8 & 0,1162 \\
+\end{longtable}
+
+Since the P-Value \textgreater{} 0.05, we can reject H0 and conclude
+that the residuals are homoskedastic.
+
+\hypertarget{causality}{%
+\subsection{Causality}\label{causality}}
+
+Within the VAR model universe, correlation is not the most appropriate
+way to infer relationships between series. In this sense, establishing
+causality between variables can provide stronger evidence of
+relationships. Therefore, the Granger Causality Test was applied, where
+our null hypothesis is based on the absence of causality. First, it is
+necessary to assess whether there is causality in an aggregated manner,
+and the results are presented in Table 7. Second, it is important to
+trace causality individually between variables, and the results are
+exposed in Table 8.
+
+\hypertarget{table-7-granger-causality-test}{%
+\paragraph{Table 7: Granger Causality
+Test}\label{table-7-granger-causality-test}}
+
+\begin{longtable}[]{@{}ccc@{}}
+\toprule\noalign{}
+Variable & F-Test & P-Value \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+IPCA & 0.40008 & 0.753 \\
+Exchange Rate & 0.61943 & 0.6026 \\
+Brent Crude Oil Futures & 18.46 & 0.01\textless{} \\
+PIM & 2.0794 & 0.1019 \\
+\end{longtable}
+
+From Table 7, at a significance level of 5\%, it was found that there is
+only Granger causality for the Brent Crude Oil Futures series; for the
+others, we accept the null hypothesis.
+
+\hypertarget{table-8-granger-causality-test}{%
+\paragraph{Table 8: Granger Causality
+Test}\label{table-8-granger-causality-test}}
+
+\begin{longtable}[]{@{}ccc@{}}
+\toprule\noalign{}
+Variable & F-Test & P-Value \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+IPCA vs Exchange Rate & 0.07126336 & 0.7898962 \\
+Exchange Rate vs IPCA & 0.0096 & 0.922 \\
+IPCA vs Brent Crude Oil Futures & 7.836 & 0.00584 \\
+Brent Crude Oil Futures vs IPCA & 0.4775 & 0.4907 \\
+IPCA vs PIM & 0.0862 & 0.7695 \\
+PIM vs IPCA & 0.3737 & 0.542 \\
+Exchange Rate vs Brent Crude Oil Futures & 6.3853 & 0.01261 \\
+Brent Crude Oil Futures vs Exchange Rate & 0.8044 & 0.3713 \\
+Exchange Rate vs PIM & 1.6994 & 0.1945 \\
+PIM vs Exchange Rate & 4.8334 & 0.02954 \\
+Brent Crude Oil Futures vs PIM & 1.1879 & 0.308 \\
+PIM vs Brent Crude Oil Futures & 50.36 & 0.01\textless{} \\
+\end{longtable}
+
+From the table, the interpretation is that the variable on the left
+causes the one on the right in the Granger sense. Therefore, with 95\%
+confidence, there is evidence that a variation in IPCA causes Brent
+Crude Oil Futures, as well as the Exchange Rate. Next, there is evidence
+that the Exchange Rate causes Brent Crude Oil Futures. Regarding PIM,
+the demand variable, it was found that it causes the Exchange Rate, as
+expected, given that demand influences the behavior of the variable,
+according to the theory presented. Another expected relationship is PIM
+causing Brent Crude Oil Futures, that is, demand causing supply.
+
+Furthermore, it is worth noting the lack of causality between the
+Exchange Rate and IPCA. Thus, we can list some reasons that align with
+Taylor (2000) and Goldfajn \& Werlang (2000). The first reason is that
+the analyzed period is characterized by controlled inflation in most
+years. Even with the change in the band interval from 2 p.p. to 1.5 p.p
+in 2017, except for 2015 and 2021 when inflation exceeded the
+established band, in other years, IPCA is within the intervals, meaning
+it is stable. A second factor for this relates to the years of low
+growth and high idle capacity, which, in turn, favors null causality
+between the highlighted series.
+
+\hypertarget{table-9-meta-e-ipca-realizado}{%
+\paragraph{Table 9: Meta e IPCA
+Realizado}\label{table-9-meta-e-ipca-realizado}}
+
+\begin{longtable}[]{@{}
+  >{\centering\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.0822}}
+  >{\centering\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.1370}}
+  >{\centering\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.2055}}
+  >{\centering\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.2877}}
+  >{\centering\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.2877}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\centering
+Year
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Target (\%)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Realized (\%)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Upper Limit (\%)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Lower Limit (\%)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+2012 & 4.5 & 5.8 & 6.5 & 2.5 \\
+2013 & 4.5 & 5.9 & 6.5 & 2.5 \\
+2014 & 4.5 & 6.4 & 6.5 & 2.5 \\
+2015 & 4.5 & 10.7 & 6.5 & 2.5 \\
+2016 & 4.5 & 6.3 & 6.5 & 2.5 \\
+2017 & 4.5 & 3.0 & 6.0 & 3.0 \\
+2018 & 4.5 & 3.8 & 6.0 & 3.0 \\
+2019 & 4.25 & 4.3 & 5.75 & 2.75 \\
+2020 & 4.0 & 4.5 & 5.5 & 2.5 \\
+2021 & 3.75 & 10.1 & 5.25 & 2.25 \\
+\end{longtable}
+
+Source: Central Bank of Brazil
+
+\hypertarget{impulse-response-function}{%
+\subsection{Impulse Response Function}\label{impulse-response-function}}
+
+The estimation of impulse response functions, along with causality
+tests, can provide more insightful evidence for the relationship between
+variables than correlation alone. The idea behind the procedure is quite
+intuitive: give a shock to a variable and observe the behavior of
+another variable until the shock dissipates, considering that stable
+models exhibit a convergence behavior of variables to their long-term
+trend.
+
+In the case of the VAR estimated for this article, the results indicate
+stability, as demonstrated by the CUSUM test and the unit roots within
+the unit circle. Thus, the article utilized the impulse response
+function with a shock of 12 periods ahead. The graphs illustrating the
+results consider the response variable on the Y-axis and are in the
+annex.
+
+Regarding the results, the function showed a positive impact on IPCA
+given the shock in the Exchange Rate. When we reverse the shock, a
+negative effect on the Exchange Rate was observed initially; however,
+the relationship reverses as the periods progress.
+
+On the supply side, a response impulse in IPCA revealed a positive
+impact on prices, while the dynamics of the impulse in IPCA concerning
+supply showed a positive variation and a gradual inversion of the impact
+to the negative field.
+
+Demand, on the other hand, showed negative effects on prices, while the
+shock from IPCA to demand demonstrated a slightly positive effect in the
+early periods until the point where the dynamics reverse. In other
+words, a positive price shock generates negative influences on economic
+activity as time progresses. This behavior is also evidenced by impulses
+via the Exchange Rate.
+
+\hypertarget{variance-decomposition}{%
+\subsection{Variance Decomposition}\label{variance-decomposition}}
+
+The variance decomposition of the prediction error is based on matrices
+of orthogonalized impulse response coefficients, allowing the analysis
+of the contribution of one variable to the forecast of another series.
+In this sense, one of the metrics for calculating pass-through is based
+on the variance decomposition of IPCA, according to Bueno (2011). Table
+10 demonstrates the results from a shock of 12 periods ahead.
+
+\hypertarget{table-10.1-ipca}{%
+\paragraph{Table 10.1: IPCA}\label{table-10.1-ipca}}
+
+\begin{longtable}[]{@{}rrrr@{}}
+\toprule\noalign{}
+est\_ipca & est\_cambio & est\_petroleo & est\_pim \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1.0000000 & 0.0000000 & 0.0000000 & 0.0000000 \\
+0.9528685 & 0.0000344 & 0.0456231 & 0.0014740 \\
+0.9384389 & 0.0010248 & 0.0565263 & 0.0040100 \\
+0.9358104 & 0.0020442 & 0.0573690 & 0.0047764 \\
+0.9352163 & 0.0024499 & 0.0573809 & 0.0049529 \\
+0.9350268 & 0.0025745 & 0.0573945 & 0.0050042 \\
+0.9349566 & 0.0026142 & 0.0574066 & 0.0050226 \\
+0.9349314 & 0.0026279 & 0.0574115 & 0.0050292 \\
+0.9349226 & 0.0026327 & 0.0574131 & 0.0050315 \\
+0.9349196 & 0.0026344 & 0.0574136 & 0.0050323 \\
+0.9349186 & 0.0026350 & 0.0574138 & 0.0050326 \\
+0.9349183 & 0.0026352 & 0.0574139 & 0.0050327 \\
+\end{longtable}
+
+On the side of IPCA, we can assert that its variability is little
+explained by the other variables and more by the variation in prices
+itself. However, over time, we see that the Exchange Rate comes to
+explain 0.26\% of the index variation, representing the pass-through of
+the analyzed period. Additionally, it is worth noting that the
+contamination of prices is more evident over time, as already
+highlighted by the literature and verified in the table above.
+
+\hypertarget{table-10.2-exchange-rate}{%
+\paragraph{Table 10.2: Exchange Rate}\label{table-10.2-exchange-rate}}
+
+\begin{longtable}[]{@{}rrrr@{}}
+\toprule\noalign{}
+est\_cambio & est\_ipca & est\_petroleo & est\_pim \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0.9957431 & 0.0042569 & 0.0000000 & 0.0000000 \\
+0.9541037 & 0.0042785 & 0.0363906 & 0.0052272 \\
+0.9426794 & 0.0042381 & 0.0476070 & 0.0054756 \\
+0.9423246 & 0.0043409 & 0.0477515 & 0.0055831 \\
+0.9422507 & 0.0043831 & 0.0477834 & 0.0055827 \\
+0.9422300 & 0.0043951 & 0.0477910 & 0.0055838 \\
+0.9422258 & 0.0043989 & 0.0477912 & 0.0055841 \\
+0.9422246 & 0.0044001 & 0.0477912 & 0.0055841 \\
+0.9422241 & 0.0044006 & 0.0477912 & 0.0055841 \\
+0.9422239 & 0.0044008 & 0.0477912 & 0.0055841 \\
+0.9422239 & 0.0044008 & 0.0477912 & 0.0055841 \\
+0.9422238 & 0.0044008 & 0.0477912 & 0.0055841 \\
+\end{longtable}
+
+For the Exchange Rate, as with IPCA, the results demonstrate that its
+variability is more related to its own variation. However, variations in
+supply have the second-highest contribution, given the result of 4.7\%
+at the end of the period, evidence that supply has, to some extent,
+driven the behavior of relative prices in the economy during this
+period.
+
+\hypertarget{table-10.3-brent-crude-oil-futures}{%
+\paragraph{Table 10.3: Brent Crude Oil
+Futures}\label{table-10.3-brent-crude-oil-futures}}
+
+\begin{longtable}[]{@{}rrrr@{}}
+\toprule\noalign{}
+est\_petroleo & est\_ipca & est\_cambio & est\_pim \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0.8629149 & 0.0028357 & 0.1342494 & 0.0000000 \\
+0.8537637 & 0.0036112 & 0.1281370 & 0.0144881 \\
+0.8521257 & 0.0041838 & 0.1290463 & 0.0146443 \\
+0.8520237 & 0.0042866 & 0.1290067 & 0.0146830 \\
+0.8519949 & 0.0043084 & 0.1290034 & 0.0146933 \\
+0.8519863 & 0.0043159 & 0.1290043 & 0.0146935 \\
+0.8519835 & 0.0043188 & 0.1290042 & 0.0146935 \\
+0.8519826 & 0.0043198 & 0.1290041 & 0.0146935 \\
+0.8519823 & 0.0043202 & 0.1290040 & 0.0146935 \\
+0.8519822 & 0.0043203 & 0.1290040 & 0.0146935 \\
+0.8519821 & 0.0043204 & 0.1290040 & 0.0146935 \\
+0.8519821 & 0.0043204 & 0.1290040 & 0.0146935 \\
+\end{longtable}
+
+On the other hand, Brent Crude Oil Futures continued to show a variation
+more related to itself, but the second-highest contribution to its
+variability came from the Exchange Rate, in line with the Granger
+Causality Test. Thus, at the end of the period, the exchange rate
+explains 12.9\% of the fluctuation in the supply variable, given the
+dependence of the series on the relative prices of the economy.
+
+\hypertarget{table-10.4-pim}{%
+\paragraph{Table 10.4: PIM}\label{table-10.4-pim}}
+
+\begin{longtable}[]{@{}rrrr@{}}
+\toprule\noalign{}
+est\_pim & est\_ipca & est\_cambio & est\_petroleo \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0.9836452 & 0.0002945 & 0.0106369 & 0.0054234 \\
+0.7322272 & 0.0010443 & 0.0480708 & 0.2186577 \\
+0.7303637 & 0.0030995 & 0.0478324 & 0.2187044 \\
+0.7287791 & 0.0038379 & 0.0479706 & 0.2194124 \\
+0.7285151 & 0.0040306 & 0.0479518 & 0.2195026 \\
+0.7284656 & 0.0040895 & 0.0479536 & 0.2194913 \\
+0.7284488 & 0.0041103 & 0.0479543 & 0.2194865 \\
+0.7284428 & 0.0041178 & 0.0479543 & 0.2194851 \\
+0.7284407 & 0.0041204 & 0.0479542 & 0.2194846 \\
+0.7284400 & 0.0041213 & 0.0479542 & 0.2194845 \\
+0.7284397 & 0.0041216 & 0.0479542 & 0.2194844 \\
+0.7284396 & 0.0041217 & 0.0479542 & 0.2194844 \\
+\end{longtable}
+
+Finally, the demand variable showed that its variation is mostly
+explained by itself, but supply explains 21.9\% of its variability at
+the end of the period.
+
+\hypertarget{conclusion}{%
+\section{Conclusion}\label{conclusion}}
+
+From the above, it is evident that the analyzed period shows a low
+exchange rate pass-through to inflation, given the value of 0.26\%
+presented in the variance decomposition. The results align with the
+discussed literature. Table 9 presented the scenario of controlled
+inflation, while Table 11 provided data on the economy's spare capacity
+combined with the low growth of the time. Table 11 considers the real
+variation of Brazil's GDP, the unemployment rate, and a proxy for spare
+capacity given by the Capacity Utilization Level of the industry (NUCI),
+which shows the percentage of how much of the industrial park is being
+used. Furthermore, we can assert that NUCI indicates there is spare
+capacity, as the utilization of installed capacity is below its
+historical average of 80\% in the reference years. Regarding the degree
+of trade openness, Brazil's low degree not only limits the pass-through
+but also its own economic growth when compared to countries that have an
+influential external sector in their economies, according to (Bacha,
+2016).
+
+In summary, we can affirm that the period presents some obstacles to
+price contamination when analyzed in the aggregate. However, some
+studies that open up price categories demonstrate that exchange rate
+pass-through occurs differently among the segments of the economy and
+among items in the consumption basket, as in the case of Maciel (2016)
+and Couto \& Fraga (2014). Another evidence, in line with Taylor (2000)
+regarding firms' pricing power, the works of Maciel (2016) and Couto \&
+Fraga (2014) also demonstrate that wholesale prices are more sensitive
+to Exchange Rate movements, corroborating the idea that the mentioned
+factors end up limiting the pass-through, and when we look at prices in
+the aggregate, we notice such behavior.
+
+\hypertarget{table-11-economy-growth-and-idleness}{%
+\paragraph{Table 11: Economy Growth and
+Idleness}\label{table-11-economy-growth-and-idleness}}
+
+\begin{longtable}[]{@{}lllr@{}}
+\toprule\noalign{}
+Year & GDP (\%) & Unemployment (\%) & NUCI (\%) \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+2012 & 1,9 & 7,1 & 80.7 \\
+2013 & 3,0 & 6,9 & 79.8 \\
+2014 & 0,5 & 6,6 & 78.7 \\
+2015 & -3,5 & 8,4 & 75.6 \\
+2016 & -3,2 & 11,6 & 74.9 \\
+2017 & 1,3 & 12,8 & 75.7 \\
+2018 & 1,7 & 12,3 & 75.2 \\
+2019 & 1,2 & 11,9 & 75.6 \\
+2020 & -3,8 & 13,6 & 78.6 \\
+2021 & 4,6 & 14,4 & 77.9 \\
+\end{longtable}
+
+Source: IBGE and IPEADATA
+
+\hypertarget{references}{%
+\section{References}\label{references}}
+
+BACHA, E. \textbf{Integrar para crescer 2.0}. Preparado para o Fórum
+Nacional BNDES, 2016.
+
+BUENO, R. D. L. S. \textbf{Econometria de séries temporais}. São Paulo:
+Cengage Learning, 2011.
+
+CAMPA, J.M., GOLDBERG, L.S. \textbf{Rate Pass-through into Import
+Prices: A Macro or Micro Phenomenon?}, NBER, Working Paper, no. 8934,
+May. 2002.
+
+Couto, Sílvia Verônica Vilarinho~e~Fraga, Gilberto Joaquim \textbf{O
+pass-through da taxa de Exchange Rate para índices de preços: análise
+empírica para o Brasil} . Revista de Economia Contemporânea
+{[}online{]}. 2014, v. 18, n. 3 {[}Acessado~13 Julho 2022{]} ,
+pp.~333-356. Disponível em: \url{https://doi.org/10.1590/141598481831}.
+ISSN 1980-5527. \url{https://doi.org/10.1590/141598481831.}
+
+DE SOUZA, Rodrigo Gustavo et al. \textbf{Relação entre Exchange Rate e
+preços no Brasil: aspectos teóricos e evidências empíricas}. In: Anais
+do XXXVIII Encontro Nacional de Economia {[}Proceedings of the 38th
+Brazilian Economics Meeting{]}. ANPEC-Associação Nacional dos Centros de
+Pósgraduação em Economia {[}Brazilian Association of Graduate Programs
+in Economics{]}. 2011.
+
+GOLDEBERG, P. K; KNETTER, M.M. \textbf{Goods Prices and Exchange Rates:
+What Have We Learned?}, Journal of Economic Literature, v. 35, n. 3, p..
+1243-1272, Sep., 1997.
+
+GOLDFAJN, I.; WERLANG, S.R.C. \textbf{The Pass-through from Depreciation
+to Inflation: A Panel Study}, Banco Central do Brasil Working Paper,
+n.5, Sep.~2000.
+
+HAMILTON, J.D. \textbf{Time Series Analysis}. Princeton University
+Press, 1994.
+
+MACIEL, Luiz Felipe Pires. \textbf{Pass-through cambial: uma estimação
+para o caso brasileiro}. 2006. Tese de Doutorado.
+
+OBSTFELD, KRUGMAN. ``\textbf{International Economics: Theory and
+Policy}.'' (1994).
+
+ROMER, D. (1993) \textbf{Openness and Inflation: Theory and Evidence}.
+The Quarterly Journal of Economics, 108, 869-903.
+
+TAYLOR, J. B. \textbf{Low inflation, pass‑through, and pricing power of
+firms}. European Economic Review, n. 44, 2000.
+
+\hypertarget{appendix}{%
+\section{Appendix}\label{appendix}}
+
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-1.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-2.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-3.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-4.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-5.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-6.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-7.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-8.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-9.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-10.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-11.pdf}
+\includegraphics{teste_en_files/figure-latex/unnamed-chunk-14-12.pdf}
+
+\bibliographystyle{agsm}
+\bibliography{bibliography.bib}
+
+
+\end{document}

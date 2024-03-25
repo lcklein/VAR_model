@@ -1,0 +1,706 @@
+---
+title: "*Pass-Through* Cambial: Uma análise para o Brasil" 
+blinded: 0
+authors: 
+  
+- name: Luca Klein
+  affiliation: Cedeplar, Universidade Federal de Minas Gerais
+keywords:
+- Preços, Séries Temporais, Macroêconomia
+abstract: |
+  O presente artigo se objetiva em analisar empiricamente a relação entre o câmbio e o índice de preço brasileiro, o IPCA (Índice de Preços Consumidor Amplo), no período de 2010 a 2022. Para tal, será feito um prevê levantamento sobre a literatura e, posteriormente, a apresentasam dos resultados empíricos obtidos através da metodologia de Vetor Autoregressivo (VAR). No que tange a parte teórica, existem alguns tipos de abordagem para o tema, tanto no âmbito microeconômico quanto no macroeconômico. O trabalho, por sua vez, irá destacar somente a abordagem macroeconômica no intuito de evidenciar a contaminação dos preços domésticos pelo câmbio de uma maneira mais agregada. Pelo lado dos resultados, a estimação revelou um baixo grau de repasse cambial para os preços, uma vez que o período analisado apresenta vetores que limitam esse tipo de dinâmica.
+  
+  
+  
+bibliography: bibliography.bib
+output: rticles::asa_article
+latex_engine : xelatex
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r, include=FALSE}
+library("janitor")
+library("readxl")
+library("tidyverse")
+library("strucchange")
+library("vars")
+library("tseries")
+library("forecast")
+library("performance")
+library("urca")
+library("plotly")
+library("hrbrthemes")
+library("knitr")
+library("sjPlot")
+library("tinytex")
+
+## Dados
+dados <- read_excel("C:/Users/Luca Klein/Documents/UFMG/materias/econometria_I/trabalhos/artigo/inputs/dados.xlsx",
+                    sheet = "dados") %>%
+  clean_names() %>%
+  mutate(time = c(seq(
+    as.Date("1998-01-01"), as.Date("2022-06-01"), by = "month"
+  ))) %>%
+  filter(time >= "2010-01-01") %>%
+  na.omit() %>% 
+  dplyr::select(-2) %>%
+  mutate(
+    ipca = log(ipca),
+    cambio = log(cambio_medio_venda),
+    petroleo = log(petroleo_brent_futuros),
+    pim = log(pim_dessaz)
+  ) %>%
+  dplyr::select(time, ipca, cambio, petroleo, pim)
+
+oci <- read_excel("C:/Users/Luca Klein/Documents/UFMG/materias/econometria_I/trabalhos/artigo/inputs/dados.xlsx",sheet = "os") %>% 
+  dplyr::select(1:4)
+
+
+
+ipca <- dados %>% dplyr::select(ipca) %>%
+  ts()
+
+cambio <- dados %>% dplyr::select(cambio) %>%
+  ts()
+
+petroleo <- dados %>% dplyr::select(petroleo) %>%
+  ts()
+
+pim <- dados %>% dplyr::select(pim) %>%
+  ts()
+
+## Estacionariedade
+
+est_ipca <- diff(ipca, differences = 1)
+est_cambio <- diff(cambio, differences = 1)
+est_petroleo <- diff(petroleo, differences = 1)
+est_pim <- diff(pim, differences = 1)
+pt <- cbind(est_ipca,est_cambio,est_petroleo,est_pim) 
+
+
+## Modelo
+
+
+
+#Seleção de defasagem
+lag_sec <- VARselect(pt, lag.max = 12, type = "const")
+lag_sec$selection
+
+
+model <- VAR(pt,
+             p = 1,
+             season = NULL,
+             exogen = NULL )
+
+## Testes
+# Estabilidade
+estabilidade <- stability(model, type = "OLS-CUSUM") 
+
+## Correlação serial
+serial <-  serial.test(model, lags.pt = 12, type = "PT.asymptotic") %>%
+  print()
+
+# Homocedasticidade
+arch <-  arch.test(model, lags.multi = 12, multivariate.only = TRUE)
+
+# impulso resposta
+
+ip_ipca_cambio <- irf(
+  model,
+  impulse = "est_ipca",
+  response = "est_cambio",
+  n.ahead = 20,
+  boot = TRUE)
+# dec variancia
+
+dec_var <- fevd(model, n.ahead = 12)
+
+dec_ipca <- dec_var[["est_ipca"]] %>%
+  as_tibble()
+
+dec_cambio <- dec_var[["est_cambio"]] %>%
+  as_tibble() %>% 
+  dplyr::select(est_cambio, everything())
+
+dec_pim <- dec_var[["est_pim"]] %>%
+  as_tibble() %>% 
+  dplyr::select(est_pim, everything())
+
+dec_petro <- dec_var[["est_petroleo"]] %>%
+  as_tibble()%>% 
+  dplyr::select(est_petroleo, everything())
+
+```
+
+# Introdução
+
+A ideia central do artigo é verificar como a variação na taxa de câmbio afeta o índice de preço doméstico, tal fenômeno é mais conhecido na literatura como o *pass-through* do câmbio para nflação.
+Nesse sentido, o grau de *pass-through* da taxa de câmbio para a inflação é definido como o impacto da taxa de câmbio nominal sobre os preços domésticos, em que a evidência empírica relata um grau menor do que uma unidade, de acordo com Campa & Goldberg (2002).
+A motivação por trás do trabalho vem da falta de estudos desse tipo para o caso brasiliero, ao passo que não há uma convergência acerca do grau de *pass-through* nesses mesmos relatos.
+
+Nos últimos anos, o Brasil se deparou com uma crise econômica em 2015 e com a crise sanitária global, em que alguns efeitos foram a depreciação da moeda nacional e a elevação do nível de preços.
+Pelo lado doméstico, evidenciamos alguns descolamentos da inflação de sua meta, como no caso de do ano de 2021.
+Pelo lado externo, ambas as crises resultaram em um cenário de maior aversão ao riscos dos agentes frente ao Brasil, de tal forma que pudemos verificar uma apreciação do dólar localmente.
+Trabalhos como Goldberg & Knetter (1997) e Campa & Goldberg (2002) demonstraram que os preços domésticos estão cada vez menos voláteis em relação ao câmbio.
+
+Do ponto de vista teórico, o assunto pode ser elaborado tanto pela teoria microeconômica quanto pela macroeconômica, sendo essa última a abordagem do artigo.
+Ademais, mesmo a perspectiva macroeconômica pode ser dividida entre setores, contudo, o trabalho vai focar somente no que tange a parte agregada.
+No que se refere a parte empírica, o artigo elabora um VAR (Vetor Autoregressivo) para medir a contaminação do câmbio nominal nos preços.
+
+# Literatura
+
+Dentro da teoria, podemos referenciar algumas abordagens macroeconômicas sobre o grau de *pass-through.* De modo geral, existem vários vetores de contaminação da inflação pelo câmbio, porém, tal dinâmica fica mais evidente a partir do maior grau de abertura comercial, demanda doméstica aquecida, participação das importações dentro da cesta de consumo das famílias e firmas e, por fim, maiores desvios entre a taxa de câmbio realizada frente a de equilíbrio.
+Em outras palavras, o *pass-through* é intensificado a partir do momento em que o consumo doméstico apresenta alta dependência do comércio internacional, então choques externos impactam com maior ênfase tais nações, seja pelo reajuste dos preços relativos ou por questões relacionas a oferta e demanda.
+Alguns trabalhos de cunho mais setorial conseguem testar de maneira mais eficiente as afirmações acima, como no caso de Krugman & Obstfeld (1994) que alegam que os preços dos produtos não comercializáveis devem ser definidos exclusivamente por fatores de oferta e demanda domésticas, de modo que uma elevação dos preços dados domesticamente favoreça uma redução no poder de compra da moeda corrente do país.
+
+A literatura empírica sobre o tema ganhou mais ênfase dentro da academia a partir de 1980.
+Uma das vertentes mais levantadas no começo se baseava em testar a Paridade do Poder de Compra (PPP) que alegava que deveria existir um repasse completo da variação do câmbio para os preços.
+No entanto, os resultados refutaram tal hipótese e chegaram à conclusão de que o *pass-through* não seria completo nem no curto prazo e nem no longo prazo, de acordo com Maciel (2006).
+Em seus novos contornos, o trabalho de Taylor (2000) traz levantamentos relevantes para o tema.
+Segundo o autor, um contexto de regime de inflação baixa ou estável é capaz de reduzir *pass-through* mediante a redução do poder das firmas no que se refere a formação de preços.
+Desta maneira, o fenômeno deve ser determinado endogenamente em relação ao contexto inflacionário.
+Em suma, Taylor (2000) alega que inflação reduzida e a política monetária conduzem a um baixo *pass-through* através do balizamento das expectativas acerca das mudanças frequentes nos custos e preços.
+
+Na mesma linha de Taylor (2000), Goldfajn & Werlang (2000) sugerem que o ambiente de baixa inflação dificulta os repasses.
+Nesse sentido, como as variações de preços e custos são mais estáveis, as firmas tendem a repassar menos os custos dados via câmbio.
+Ademais, Goldfajn & Werlang (2000) chegam à conclusão de que os principais determinantes para o *pass-through* são o hiato do produto, grau de abertura comercial e taxa de câmbio real.
+Nesse sentido, há evidências de que quanto maior a ociosidade da economia, maior a dificuldade de repasse cambial para os preços.
+Isto é, diante de um cenário de expansão da economia, onde a ociosidade dos fatores de produção é baixo, as firmas tendem a ter mais facilidade para repassar os custos relacionados ao câmbio.
+No que tange a taxa de câmbio real, estudos mencionam que tais taxas sobreapreciadas colaboram para uma depreciação futura.
+Sendo assim, Goldfajn & Werlang (2000) reforçam tal perspectiva ao afirmar que a correções cambiais mediante a depreciações em abundância implicariam em um ambiente de aceleração inflacionária.
+
+Outra contribuição importante veio de Romer (1993), principalmente pelo lado da abertura comercial.
+Romer (1993) comenta que a abertura gera efeitos sobre os determinantes da inflação no momento que o governo exerce choque inesperado nos preços frente a uma desvalorização cambial.
+Nessa linha, haveria um impacto sobre os benefícios de uma expansão do produto em relação ao seu *trade-off* com a inflação.
+Logo, segundo o autor, o grau de abertura tem influência negativa sobre os incentivos de produção doméstica e, portanto, corroborando a ideia de que o *pass-through* será maior quando esse cenário de demanda externa prevalecer sobre a interna, à exceção de bens substitutos.
+Acerca do *trade-off* entre produto e inflação, Romer (1993) argumenta que um maior grau de abertura comercial colabora com a alta da inflação no momento de crescimento do produto o que, por sua vez, deve gerar uma depreciação da taxa de câmbio e, consequentemente, alta nos preços domésticos.
+O autor relata dois canais de transmissão dessa contaminação.
+O primeiro se refere há um aumento acelerado dos custos do câmbio para inflação via produtos importados.
+Enquanto o segundo, se dá com a alta do nível geral de preços que impacta positivamente os bens individuais, então com essa percepção e assumindo salários flexíveis, os custos das firmas tenderiam a aumentar e, assim, também os reflexos positivos sobre os preços dos bens domésticos.
+Em linhas gerais, um cenário de crescimento do produto atrelado à uma economia com alto grau de abertura comercial provoca uma expansão monetária e altas nos preços domésticos.
+
+# Análise Empírica
+
+## Base de dados
+
+1.  IPCA - Número-índice (base 1993 = 100) - divulgado pelo Instituto Brasileiro de Geografia e Estatística (IBGE)
+
+2.  Taxa de Câmbio (R\$/USD) - livre/venda - Média de período - divulgado pelo Banco Central
+
+3.  Petróleo Brent Futuros (R\$/USD) - divulgado pelo Fred St. Louis
+
+4.  Produção Industrial Mensal(PIM) - Número índice com ajuste sazonal (base 2012=100) - divulgado pelo Instituto Brasileiro de Geografia e Estatística (IBGE)
+
+Os dados utilizados estão na periodicidade mensal e foi aplicada uma função logarítmica sobre eles.
+Ademais, a estimação usufruiu de dados de preços e atividade econômica, sendo que as variáveis PIM e petróleo são *proxys* de controle para estabelecer uma relação de demanda e oferta, respectivamente, como sugerido em Alves & Souza (2011).
+Por fim, o período considerado é janeiro de 2010 a fevereiro de 2022 e todas as variáveis foram tratadas como endógenas.
+
+## Teste de Estacionariedade
+
+A partir do teste de Dickey-Fuller Aumentado (ADF) verificou-se que as séries em nível aceitavam H0, ou seja, os dados são não estacionários.
+Contudo, tomando a primeira diferença refutamos a hipótese nula, como demostrado na tabela abaixo.
+
+#### Tabela 1: Teste de raiz unitária
+
+| Variável | Estatística | P-Valor |       Status       |
+|:--------:|:-----------:|:-------:|:------------------:|
+|   IPCA   |   -1.6282   | 0.7313  |       Nível        |
+|  Câmbio  |   -2.9474   | 0.1819  |       Nível        |
+| Petróleo |   -1.4739   | 0.7955  |       Nível        |
+|   PIM    |   -2.8466   | 0.2239  |       Nível        |
+|   IPCA   |   -3.8991   | 0.01616 | Primeira Diferença |
+|  Câmbio  |   -3.7768   | 0.02214 | Primeira Diferença |
+| Petróleo |   -4.6761   | 0.01\<  | Primeira Diferença |
+|   PIM    |   -6.2335   | 0.01\<  | Primeira Diferença |
+
+## Seleção de Defasagem
+
+Esta seção apresenta a seleção de defasagens a ser utilizada no modelo VAR, com defasagem máxima de 12 meses à frente.
+Os critérios considerados são:
+
+1.  AIC: critério de informação de Akaike
+
+2.  HQ: critério de informação de Hannan-Quinn
+
+3.  SC: critério de informação de Schwarz
+
+4.  FPE: critério de previsão de erro final
+
+#### Tabela 2: Estatística dos Critérios
+
+```{r, echo=FALSE}
+lag <- t(lag_sec[["criteria"]]) %>%
+  as_tibble() %>% 
+  mutate(Lag = seq(1:12)) %>% 
+  dplyr::select(Lag, everything())
+
+kable(lag)
+
+```
+
+Por unanimidade, os critérios sugerem que a defasagem dentro do modelo deve ser de 1 período, como evidenciado a seguir
+
+#### Tabela 3: Defasagens
+
+```{r, echo=FALSE}
+def <- t(lag_sec[["selection"]]) %>%
+  as_tibble() 
+
+kable(def)
+
+```
+
+## Teste de Quebra Estrutural
+
+O intuito por trás desse teste é verificar se existe alguma quebra estrutural nas séries, desta maneira entender se há alguma diferença significativa entre os parâmetros estimados que estabelecem a relação entre as variáveis.
+Para tal, o artigo utilizou a método de CUSUM que se baseia na soma acumulada dos resíduos recursivos e detecta a instabilidade da variável quando os dados ultrapassam a área delimitada por duas linhas críticas de 5% de significância.
+Ao final do teste verificou-se que não há quebras estruturais nas séries.
+
+```{r, echo=FALSE}
+
+
+par(mar = c(2, 2, 2, 2))
+
+plot(estabilidade)
+
+
+```
+
+## Modelo
+
+O sistema de equações gerados a partir da metodologia comentada e dos critérios elencados acima gerou os seguintes parâmetros:
+
+#### Tabela 4.1: IPCA
+
+```{r, echo=FALSE}
+res_ipca <- model[["varresult"]][["est_ipca"]][["coefficients"]] %>% 
+  t() %>% 
+  as_tibble()
+
+kable(res_ipca)
+
+```
+
+#### Tabela 4.2: Taxa de Câmbio
+
+```{r, echo=FALSE}
+
+res_cambio <- model[["varresult"]][["est_cambio"]][["coefficients"]] %>% 
+  t() %>% 
+  as_tibble()
+
+kable(res_cambio)
+
+```
+
+#### Tabela 4.3: Petróleo
+
+```{r, echo=FALSE}
+res_petroleo <- model[["varresult"]][["est_petroleo"]][["coefficients"]] %>% 
+  t() %>% 
+  as_tibble()
+
+kable(res_petroleo)
+```
+
+#### Tabela 4.4: PIM
+
+```{r, echo=FALSE}
+res_pim <- model[["varresult"]][["est_pim"]][["coefficients"]] %>% 
+  t() %>% 
+  as_tibble()
+
+kable(res_pim)
+
+```
+
+Por se tratar de modelos log-log, podemos interpretar os parâmetros como elasticidades.
+Então, por exemplo, no caso do IPCA uma variação de 1% no câmbio defasado em 1 período está associado a uma variação, em média, de 0,0081% no IPCA no período de referência.
+
+## Correlação Serial
+
+Para testar se os resíduos são independentes e não carregam nenhuma informação relevante para o modelo utiliza-se o Teste de Portmanteau, em que a hipótese nula do teste é de que os resíduos são autocorrelacionados.
+
+#### Tabela 5: Teste de Portmanteau
+
+| Chi - Quadrado | P-valor |
+|:--------------:|---------|
+|     198,94     | 0,1135  |
+
+Como o P-valor \> 0,05, podemos rejeitar H0 e concluir que não há autocorrelação serial no modelo
+
+## Heterocedasticidade
+
+Para testar se os resíduos apresentam variância constante, tomamos o Teste ARCH multivariado que assume H0 como a presença de heterocedasticidade.
+
+#### Tabela 6: Teste ARCH
+
+| Chi - Quadrado | P-valor |
+|:--------------:|:-------:|
+|     1258,8     | 0,1162  |
+
+Como o P-valor \> 0,05, podemos rejeitar H0 e concluir que os resíduos são homocedásticos.
+
+## Causalidade
+
+Dentro do universo dos modelos VAR a correlação, em grande medida, não é a maneira mais adequada de se infererir relações entre as séries.
+Nesse sentido, traçar causalidade entre as variáveis pode levantar maiores evidências de relações entre elas.
+Portanto, aplicou-se o Teste de Causalidade de Granger, em que nossa hipótese nula se baseia na ausência de causalidade.
+Primeiramente, cabe avaliar se há causalidade de maneira agregada, sendo que os resultados são apresentados na tabela 7.
+Em segundo lugar, cabe traçar a causalidade individualmente entre as variáveis, cujos resultados estão expostos na tabela 8.
+
+#### Tabela 7: Teste de Granger
+
+| Variável | Teste-F | P-Valor |
+|:--------:|:-------:|:-------:|
+|   IPCA   | 0.40008 |  0.753  |
+|  Câmbio  | 0.61943 | 0.6026  |
+| Petróleo |  18.46  | 0.01\<  |
+|   PIM    | 2.0794  | 0.1019  |
+
+Via tabela 7, a um nível de significância de 5%, verificou-se que somente há causalidade no sentido de Granger para a série de Petróleo, nas demais aceitamos a hipótese nula.
+
+#### Tabela 8: Teste de Granger
+
+|      Variável      |  Teste-F   |  P-Valor  |
+|:------------------:|:----------:|:---------:|
+|   IPCA vs Câmbio   | 0.07126336 | 0.7898962 |
+|   Câmbio vs IPCA   |   0.0096   |   0.922   |
+|  IPCA vs Petróleo  |   7.836    |  0.00584  |
+|  Petróleo vs IPCA  |   0.4775   |  0.4907   |
+|    IPCA vs PIM     |   0.0862   |  0.7695   |
+|    PIM vs IPCA     |   0.3737   |   0.542   |
+| Câmbio vs Petróleo |   6.3853   |  0.01261  |
+| Petróleo vs Câmbio |   0.8044   |  0.3713   |
+|   Câmbio vs PIM    |   1.6994   |  0.1945   |
+|   PIM vs Câmbio    |   4.8334   |  0.02954  |
+|  Petróleo vs PIM   |   1.1879   |   0.308   |
+|  PIM vs Petróleo   |   50.36    |  0.01\<   |
+
+A partir da tabela, a interpretação é de que a variável da esquerda causa a da direita no sentido de Granger.
+Logo, com 95% de confiança, há evidências de que uma variação no IPCA causa Petróleo, assim como o câmbio.
+Na sequência, existem evidências de que câmbio causa petróleo.
+No que se refere à PIM, a variável de demanda, verificou-se que ela causa câmbio, algo esperado, tendo em vista que a demanda tem influências sobre o comportamento da variável, segundo a teoria exposta.
+Outra relação espera é PIM causando Petróleo, isto é, demanda causando oferta.
+
+Ademais, vale destacar a falta de causalidade entre câmbio e IPCA, sendo assim, podemos elencar alguns motivos que vem em linha com Taylor (2000) e Goldfajn & Werlang (2000).
+O primeiro deles é de que o período analisado é composto por uma inflação controlada na maioria dos anos.
+Mesmo com a mudança do intervalo da banda de 2 p.p.
+para 1.5 p.p em 2017, à exceção de 2015 e 2021 que o inflação supera a banda estabelecida, os demais anos o IPCA se encontra dentro dos intervalos, ou seja, estável.
+Um segundo condicionante para tal, diz respeito aos anos de baixo crescimento e alta capacidade ociosa o que, por sua vez, favorece a causalidade nula entre as séries em destaque.
+
+#### Tabela 9: Meta e IPCA Realizado
+
+| Ano  | Meta (%) | Realizado (%) | Limite Superior (%) | Limite Inferior (%) |
+|:----:|:--------:|:-------------:|:-------------------:|:-------------------:|
+| 2012 |   4.5    |      5.8      |         6.5         |         2.5         |
+| 2013 |   4.5    |      5.9      |         6.5         |         2.5         |
+| 2014 |   4.5    |      6.4      |         6.5         |         2.5         |
+| 2015 |   4.5    |     10.7      |         6.5         |         2.5         |
+| 2016 |   4.5    |      6.3      |         6.5         |         2.5         |
+| 2017 |   4.5    |      3.0      |         6.0         |         3.0         |
+| 2018 |   4.5    |      3.8      |         6.0         |         3.0         |
+| 2019 |   4.25   |      4.3      |        5.75         |        2.75         |
+| 2020 |   4.0    |      4.5      |         5.5         |         2.5         |
+| 2021 |   3.75   |     10.1      |        5.25         |        2.25         |
+
+####### Fonte: Banco Central do Brasil
+
+## Função Impulso Resposta
+
+A estimação de funções impulso resposta, assim como os testes de causalidade, são capazes de trazer evidências mais interresantes para relação entre as variáveis do que a correlação.
+Então, a ideia por trás do procedimento é bem intuitiva, dar um choque em alguma variável e observar o comportamento de outra variável até o choque se dissipar, tendo em vista que modelos estáveis apresentam um comportamento de de convergência das variáveis para sua tedência no longo prazo.
+No caso do VAR estimado para o artigo, os resultados apontam que existe estabilidade como demonstado pelo teste de CUSUM e pelas raízes unitárias dentro do círculo unitário.
+Desta maneira, o artigo usufruiu da função impulso resposta com choque de 12 períodos a frente.
+Os gráficos que esboçam os resultados consideram a variável de resposta no eixo Y e estão no anexo.
+
+No que tange aos resultados, a função trouxe um impacto positivo para o IPCA dado o choque em câmbio.
+Quando invertemos o choque, observou-se, em um primeiro momento, um reflexo negativo no câmbio, contudo, a relação se inverte à medida que os períodos avançam.
+Pelo lado da oferta, um impulso resposta no IPCA evidenciou um comportamento positivo sobre os preços, ao mesmo tempo que a dinâmica do impulso no IPCA frente a oferta demonstrou uma variação positiva e gradualmente a inversão do impacto para o campo negativo.
+A demanda, por sua vez, acusou reflexos negativos sobre os preços, enquanto o choque do IPCA para demanda demonstrou um efeito ligeiramente positivo nos primeiros períodos até o ponto que a dinâmica se inverte.
+Em outras palavras, um choque positivo de preço gera influências negativas para atividade econômica à medida que o tempo avança, tal comportamento também é evidenciado por impulsos via câmbio.
+
+## Decomposição de Variância
+
+A decomposição da variância do erro de previsão é baseada nas matrizes de coeficiente de impulso resposta ortogonalizadas que permitem analisar a contribuição de uma variável para previsão de outra série.
+Nesse sentido, uma das métricas para o cálculo do *pass-through* é a partir da decomposição da variância o IPCA, segundo Bueno (2011).
+A tabela 10 demonstra os resultados a partir de um choque de 12 períodos a frente.
+
+#### Tabela 10.1: IPCA
+
+```{r, echo=FALSE}
+
+kable(dec_ipca)
+
+
+
+```
+
+Pelo lado do IPCA, podemos afirmar que sua variabilidade é pouco explicada pelas demais variáveis e mais pela própria variação de preços.
+Contudo, com o passar do tempo temos que o câmbio chega a explicar 0,26% da variação do índice, sendo esse o *pass-through* do período analisado.
+Além disso, vale destacar que a contaminação dos preço é mais evidente ao longo do tempo, algo já levantado pela literatura e verificado na tabela acima.
+
+#### Tabela 10.2: Câmbio
+
+```{r, echo=FALSE}
+
+kable(dec_cambio)
+
+
+
+```
+
+Para o câmbio, assim como no IPCA, os resultados demonstram que que sua variabilidade está mais relacionada com a sua própria variação.
+No entanto, as variações da oferta tem a segunda maior contribuição, dado o resultado de 4,7% no fim do período, uma evidência de que a oferta tem conduzido, em certa medida, o comportamento dos preços relativos na economia nesse período.
+
+#### Tabela 10.3: Petróleo
+
+```{r, echo=FALSE}
+
+kable(dec_petro)
+
+
+
+```
+
+Já o petróleo seguiu apresentando uma variação mais relacionada consigo mesmo, porém a segunda maior contribuição para sua variabilidade veio do câmbio, em linha com o Teste de Causalidade de Granger.
+Desta maneira, ao fim do período, a taxa cambial explica 12,9% da flutuação da variável de oferta, tendo em vista a dependência da séria frente aos preços relativos da economia.
+
+#### Tabela 10.4: PIM
+
+```{r, echo=FALSE}
+
+kable(dec_pim)
+
+
+
+```
+
+Finalmente, a variável de demanda acusou que sua variação é explicada majoritariamente por si própria, mas que a oferta chega a explicar ao final do período 21,9% da sua variabilidade.
+
+# Conclusão
+
+Do exposto, fica evidente que o período analisado apresenta baixo repassse cambial para inflação, dado o valor de 0,26% apresentado na decomposição da variância.
+Os resultados acompanham a literatura comentada.
+A tabela 9 apresentou o cenário de inflação controlada, enquanto a tabela 11 levanta dados sobre capacidade ociosa da economia em conjunto ao baixo crescimento da época.
+A tabela 11 considera a variação real do PIB do Brasil, a taxa de desemprego e uma *proxy* de ociosidade dado pelo Nível de Utilização da Capacidade Instalada da indústria (NUCI) que mostra a porcentagem de quanto do parque industrial está sendo utilizado.
+Ademais, podemos afirmar que a NUCI indica que há ociosidade, uma vez que a utilização da capacidade instalada se encontra abaixo da sua média histórica de 80% nos anos de referência.
+No que tange ao grau de abertura comercial, o baixo grau do Brasil não só limita o *pass-through* como o seu próprio crescimento econômico quando comparado de a países que apresentam um setor externo influente em suas economias, segundo (Bacha, 2016).
+
+Em síntese, podemos afirmar que o período apresenta alguns entraves para contaminação dos preços quando analisados de forma agregada.
+No entanto, alguns trabalhos que fazem a abertura das categorias de preços demonstram que o repasse cambial se dá de maneira distinta entre os segmentos da economia e entre os itens da cesta de consumo, como no caso de Maciel (2016) e Couto & Fraga (2014).
+Outra evidência, em linha com Taylor (2000) no que diz respeito ao *princing power* das firmas, os trabalhos de Maciel (2016) e Couto & Fraga (2014) também demonstram que os preços no atacado são mais sensíveis aos movimentos do câmbio, o que corrobora a ideia de que os fatores comentados acabam limitando os repasses e quando olhamos de forma agregada para os preços notamos tal comportamento.
+
+#### Tabela 11: Crescimento e Ociosidade da Economia
+
+```{r, echo=FALSE}
+
+kable(oci)
+
+```
+
+Fonte: IBGE e IPEADATA
+
+# Bibliografia
+
+BACHA, E. **Integrar para crescer 2.0**.
+Preparado para o Fórum Nacional BNDES, 2016.
+
+BUENO, R. D. L. S. **Econometria de séries temporais**.
+São Paulo: Cengage Learning, 2011.
+
+CAMPA, J.M., GOLDBERG, L.S. **Rate Pass-through into Import Prices: A Macro or Micro Phenomenon?**, NBER, Working Paper, no. 8934, May. 2002.
+
+Couto, Sílvia Verônica Vilarinho e Fraga, Gilberto Joaquim **O pass-through da taxa de câmbio para índices de preços: análise empírica para o Brasil** .
+Revista de Economia Contemporânea [online].
+2014, v. 18, n.
+3 [Acessado 13 Julho 2022] , pp. 333-356.
+Disponível em: <https://doi.org/10.1590/141598481831>.
+ISSN 1980-5527.
+<https://doi.org/10.1590/141598481831.>
+
+DE SOUZA, Rodrigo Gustavo et al.
+**Relação entre câmbio e preços no Brasil: aspectos teóricos e evidências empíricas**.
+In: Anais do XXXVIII Encontro Nacional de Economia [Proceedings of the 38th Brazilian Economics Meeting].
+ANPEC-Associação Nacional dos Centros de Pósgraduação em Economia [Brazilian Association of Graduate Programs in Economics].
+2011.
+
+GOLDEBERG, P. K; KNETTER, M.M. **Goods Prices and Exchange Rates: What Have We Learned?**, Journal of Economic Literature, v. 35, n.
+3, p..
+1243-1272, Sep., 1997.
+
+GOLDFAJN, I.; WERLANG, S.R.C. **The Pass-through from Depreciation to Inflation: A Panel Study**, Banco Central do Brasil Working Paper, n.5, Sep. 2000.
+
+HAMILTON, J.D. **Time Series Analysis**.
+Princeton University Press, 1994.
+
+MACIEL, Luiz Felipe Pires.
+**Pass-through cambial: uma estimação para o caso brasileiro**.
+2006.
+Tese de Doutorado.
+
+OBSTFELD, KRUGMAN.
+"**International Economics: Theory and Policy**." (1994).
+
+ROMER, D.
+(1993) **Openness and Inflation: Theory and Evidence**.
+The Quarterly Journal of Economics, 108, 869-903.
+
+TAYLOR, J. B. **Low inflation, pass‑through, and pricing power of firms**.
+European Economic Review, n.
+44, 2000.
+
+# Anexo
+
+```{r echo = FALSE}
+
+par(mar = c(2, 2, 2, 2))
+
+
+ip_ipca_cambio <- irf(
+  model,
+  impulse = "est_ipca",
+  response = "est_cambio",
+  n.ahead = 12,
+  boot = TRUE) %>%
+  plot()
+# choque no ipca, resposta no cambio
+
+# Ipca gera um efeito positivo sobre cambio
+
+
+ip_cambio_ipca <- irf(
+  model,
+  impulse = "est_cambio",
+  response = "est_ipca",
+  n.ahead = 12,
+  boot = TRUE) %>% plot()
+
+teste_1 <- ip_cambio_ipca[["irf"]] %>% as_tibble() 
+
+
+
+
+# choque no ipca, resposta no cambio
+
+
+# 4.52) IPCA x Petroleo -----------------------------------------------------
+
+
+ip_ipca_petroleo <-
+  irf(
+    model,
+    impulse = "est_ipca",
+    response = "est_petroleo",
+    n.ahead = 12,
+    boot = TRUE
+  ) %>%
+  plot()
+
+ip_petroleo_ipca <-
+  irf(
+    model,
+    impulse = "est_petroleo",
+    response = "est_ipca",
+    n.ahead = 12,
+    boot = TRUE
+  ) %>%
+  plot()
+
+# 4.53) IPCA x PIM -----------------------------------------------------
+
+
+ip_ipca_pim <-
+  irf(
+    model,
+    impulse = "est_ipca",
+    response = "est_pim",
+    n.ahead = 12,
+    boot = TRUE
+  ) %>%
+  plot()
+
+ip_pim_ipca <-
+  irf(
+    model,
+    impulse = "est_pim",
+    response = "est_ipca",
+    n.ahead = 12,
+    boot = TRUE
+  ) %>%
+  plot()
+
+# 4.53) Cambio x Petroleo -----------------------------------------------------
+
+
+ip_cambio_petroleo <-
+  irf(
+    model,
+    impulse = "est_cambio",
+    response = "est_petroleo",
+    n.ahead = 12,
+    boot = TRUE
+  ) %>%
+  plot()
+
+ip_petroleo_cambio <-
+  irf(
+    model,
+    impulse = "est_petroleo",
+    response = "est_cambio",
+    n.ahead = 12,
+    boot = TRUE
+  ) %>%
+  plot()
+
+# 4.54) Cambio x PIM -----------------------------------------------------
+
+
+ip_cambio_pim <-
+  irf(
+    model,
+    impulse = "est_cambio",
+    response = "est_pim",
+    n.ahead = 12,
+    boot = TRUE
+  ) %>%
+  plot()
+
+ip_pim_cambio <-
+  irf(
+    model,
+    impulse = "est_pim",
+    response = "est_cambio",
+    n.ahead = 12,
+    boot = TRUE
+  ) %>%
+  plot()
+
+# 4.54) Petroleo x PIM -----------------------------------------------------
+
+
+ip_petroleo_pim <-
+  irf(
+    model,
+    impulse = "est_petroleo",
+    response = "est_pim",
+    n.ahead = 12,
+    boot = TRUE
+  ) %>%
+  plot()
+
+ip_pim_petroleo <-
+  irf(
+    model,
+    impulse = "est_pim",
+    response = "est_petroleo",
+    n.ahead = 12,
+    boot = TRUE
+  ) %>%
+  plot()
+
+
+
+```

@@ -1,0 +1,4 @@
+x ~ y, x causa y
+
+$$Pass-Throught = \sum_{i=1}^{P} \Delta LOG(IPCA t, t+j)/\sum_{i=1}^{T}\Delta LOG (Câmbio t, t+j) * 100
+$
