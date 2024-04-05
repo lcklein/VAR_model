@@ -1,13 +1,13 @@
 Repository Overview:
 
-This repository conducts an empirical analysis in R utilizing VAR (Vector autoregression) methodology to examine the exchange rate pass-through to the Brazilian Price Index from 2010 to 2022.
+This repository contains an empirical analysis in R utilizing VAR (Vector autoregression) methodology to examine the exchange rate pass-through to the Brazilian Price Index from 2010 to 2022.
 
 Contents:
 
 i) The R Script with the VAR Application (including inference tests, impulse response functions and variance decomposition).
 
 
-ii) A Rmarkdown article example with the economic discussion of the model application.
+ii) A Rmarkdown file with the written article with the economic discussion of the model application.
 
 
 Abstract:
